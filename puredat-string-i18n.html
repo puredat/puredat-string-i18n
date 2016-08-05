@@ -1,0 +1,34 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+`puredat-string-i18n`
+
+
+@demo demo/index.html 
+-->
+
+<dom-module id="puredat-string-i18n">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h2>Hello [[prop1]]</h2>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'puredat-string-i18n',
+
+      properties: {
+        prop1: {
+          type: String,
+          value: 'puredat-string-i18n',
+        },
+      },
+
+    });
+  </script>
+</dom-module>
