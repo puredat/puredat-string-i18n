@@ -1,34 +1,231 @@
 <link rel="import" href="../polymer/polymer.html">
-
+<link rel="import" href="../iron-pages/iron-pages.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-tabs/paper-tabs.html">
 <!--
-`puredat-string-i18n`
-
-
-@demo demo/index.html 
+	`puredat-string-i18n` "STRING" type, "ONE" cardinality, and "I18N" widget.
+	
+	@demo demo/index.html 
 -->
-
 <dom-module id="puredat-string-i18n">
-  <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
-    <h2>TO-DO [[prop1]]</h2>
-  </template>
+	<template>
+		<style>
+			paper-tabs {
+				--paper-tabs-selection-bar-color: var(--accent-color);
+				padding-right: 10px;
+				font-size: 12px;
+				height: 35px;
+				
+				--paper-tabs-selection-bar: {
+					bottom: 6px;
+				}				
+			}
+			
+			paper-input {
+				--paper-input-container: {
+					padding-right: 10px;
+				}
+			}
+			
+			paper-icon-button {
+				position: absolute;
+				right: 0;
+				bottom: 0;
+			}
+			
+			paper-tabs {
+				--paper-tabs-selection-bar-color: var(--default-primary-color);
+			}
+		</style>
+		
+		<iron-ajax id="ajax"
+				on-response="responseHandler"
+				url="https://api.mymemory.translated.net/get"
+				method="GET"
+				verbose="false">
+		</iron-ajax>
 
-  <script>
-    Polymer({
+		<div style="display: flex">
+			<span style="height: 10px; font-size: 12px; color: #757575; padding-top: 10px; flex: 1">[[label]]</span>
 
-      is: 'puredat-string-i18n',
+			<paper-tabs 
+					id="languageTabs" disabled 
+					selected="{{selected}}">
 
-      properties: {
-        prop1: {
-          type: String,
-          value: 'puredat-string-i18n',
-        },
-      },
+				<template is="dom-repeat" items="{{supportedLanguages}}" rendered-item-count="count">
+					<paper-tab active$="[[isSelected(index)]]">[[item.literal]]</paper-tab>
+				</template>
+			</paper-tabs>
+		</div>
+		
+		<iron-pages selected="{{selected}}">
+			<template is="dom-repeat" items="{{supportedLanguages}}">
+				<paper-input
+						no-label-float
+						type="text" 
+						maxlength="[[maxLength]]" 
+						allowed-pattern="[[pattern]]"
+						value="[[getValue(value, item.name)]]" 
+						error-message="[[errorMessage]]"
+						invalid="[[_isInvalid(errorMessage)]]"
+						readonly$="[[readOnly]]">
+					<paper-icon-button 
+							suffix 
+							title="Traducir" 
+							icon="translate"
+							disabled$="[[readOnly]]" 
+							on-click="translateHandler">
+					</paper-icon-button>
+				</paper-input>
+			</template>
+		</iron-pages>
+	</template>
+	
+	<script>
+		Polymer({
+			is: 'puredat-string-i18n',
+			
+			properties: {
+				
+				selected: {
+					type: Number,
+					value: 0
+				},
+				
+				supportedLanguages: {
+					type: Array,
+					value: function() {
+						return [
+							{
+								name: "es_ES",
+								literal: "Spanish"
+							},
+							{
+								name: "en_US",
+								literal: "English (US)"
+							}
+						];
+					}
+				},
+				
+				/** Name */
+				name: {
+					type: String
+				},
+				
+				/** Maximum length. */
+				maxLength: {
+					type: Number,
+					value: 100
+				},
+				
+				/** Allowed pattern. For example: [a-zA-Z]. */
+				pattern: {
+					type: String
+				},
+				
+				/** Descriptive label. */
+				label: {
+					type: String
+				},
+				
+				/** Value. */
+				value: {
+					type: Object,
+					notify: true,
+					value: function() {
+						return {};
+					}
+				},
+				
+				/** Error message. */
+				errorMessage: {
+					type: String
+				},
+				
+				/** Number of columns in a row of 10 columns. */
+				cols: {
+					type: Number,
+					value: 5,
+					observer: '_colsChanged'
+				},
+				
+				/** Read only. */
+				readOnly: {
+					type: Boolean,
+					value: false
+				}
+			},
+			
+			translateHandler: function(event) {
+				var baseLanguage;
+				var baseValue;
 
-    });
-  </script>
+				if (this.supportedLanguages != null
+						&& this.supportedLanguages.length > 0) {
+					for (var i = 0; i < this.supportedLanguages.length; i++) {
+						var languageName = this.supportedLanguages[i].name;
+						if (languageName != null && languageName != "") {
+							if (this.value[languageName] != null
+									&& this.value[languageName] != "") {
+								baseLanguage = languageName;
+								baseValue = this.value[languageName];
+								break;
+							}
+						}						
+					}
+
+					for (var i = 0; i < this.supportedLanguages.length; i++) {
+						var languageName = this.supportedLanguages[i].name;
+						if (languageName != baseLanguage) {
+							this.$.ajax.params["q"] = baseValue;
+							this.$.ajax.params["langpair"] = baseLanguage.split("_")[0] + "|" + languageName.replace("_", "-");
+console.log(this.$.ajax.params["q"]);
+console.log(this.$.ajax.params["langpair"]);
+							
+							this.$.ajax.generateRequest();
+						}
+					}
+				}
+			},
+			
+			responseHandler: function(event, request) {
+				if (event.detail.succeeded) {
+					if (event.detail.response != null
+							&& event.detail.response.matches != null
+							&& event.detail.response.matches.length > 0) {
+console.log(request.xhr);
+console.log(event.detail);
+console.log(event.target.params.langpair.split("|")[1]);
+console.log(event.detail.response.responseData.translatedText);
+						this.value[event.target.params.langpair.split("|")[1]] = event.detail.response.responseData.translatedText;
+					}
+				}
+			},
+			
+			getValue: function(value, language) {
+				return value[language];
+			},
+			
+			isSelected: function(number) {
+				return number == 0;
+			},
+			
+			_colsChanged: function(newValue, oldValue) {
+				this.style.minWidth = (50 * newValue) + "px";
+				this.style.flex = (10 * newValue) + "%";
+			},
+			
+			/**
+			 * Returns if the field is valid.
+			 * @param {String} errorMessage The error message.
+			 * @return {Boolean} If the input field is valid.
+			 */
+			_isInvalid: function(errorMessage) {
+				return errorMessage != null
+						&& errorMessage != "";
+			}
+		});
+	</script>
 </dom-module>
