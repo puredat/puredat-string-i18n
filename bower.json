@@ -6,7 +6,8 @@
     "iron-pages": "polymerelements/iron-pages#^1.0.0",
     "paper-tabs": "^1.6.2",
     "iron-ajax": "^1.2.1",
-    "paper-input": "^1.1.11"
+    "paper-input": "^1.1.11",
+    "paper-spinner": "^1.2.0"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",

@@ -27,25 +27,23 @@
 								max-length="100"
 								label="Just a string i18n test"
 								cols="6"
-								value='{"en_US": "The dog is red"}'
-								supported-languages='[{"name": "es_ES", "literal": "Spanish"},{"name": "en_US", "literal": "English"},{"name": "de", "literal": "German"}]'
+								values='[{"languageName": "en_US", "languageLiteral": "Inglés", "value": "The dog is red"}, {"languageName": "es_ES", "languageLiteral": "Español"}, {"languageName": "de", "languageLiteral": "Alemán"}]'
 								pattern="[A-Za-z ]">
 						</puredat-string-i18n>
 						
 						<puredat-string-i18n
 								name="field2" 
 								cols="4" 
-								value='{"en_US": "Nice!", "es_ES": "Guay"}'
-								read-only 
-								value="Try to change this value">
+								values='[{"languageName": "en_US", "languageLiteral": "Inglés", "value": "The dog is red"}, {"languageName": "es_ES", "languageLiteral": "Español", "value": "El perro es rojo"}]'
+								read-only>
 						</puredat-string-i18n>
 					</div>
 					
 					<paper-button onclick="setErrorMessageClickHandler(event)">Set error message</paper-button>
 					<paper-button onclick="resetErrorMessageClickHandler(event)">Reset error message</paper-button>
 					
-					<paper-button onclick="getValueClickHandler(event)">Get value</paper-button>
-					<paper-button onclick="setValueClickHandler(event)">Set value</paper-button>
+					<paper-button onclick="getValuesClickHandler(event)">Get values</paper-button>
+					<paper-button onclick="setValuesClickHandler(event)">Set values</paper-button>
 					
 					<script>
 						function setErrorMessageClickHandler(event) {
@@ -56,16 +54,20 @@
 							document.getElementById("field1").errorMessage = null;
 						}
 						
-						function getValueClickHandler(event) {
-							console.log(document.getElementById("field1").value);
+						function getValuesClickHandler(event) {
+							console.log(document.getElementById("field1").values);
 						}
 						
-						function setValueClickHandler(event) {
-							document.getElementById("field1").value = {
-								"en_US": "Cool!",
-								"es_ES": "Bueeeeno",
-								"de": "Hübsch"
-							};
+						function setValuesClickHandler(event) {
+							document.getElementById("field1").values = [{
+								"languageName": "de",
+								"languageLiteral": "Alemán"
+							}, {
+								"languageName": "es_ES",
+								"languageLiteral": "Español",
+								"value": "El perro es demasiado pequeño para proteger la casa"
+							}];
+							document.getElementById("field1").selected = 0;
 						}
 					</script>
 				</template> 

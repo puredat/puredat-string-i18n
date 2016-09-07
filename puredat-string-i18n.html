@@ -3,6 +3,7 @@
 <link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-tabs/paper-tabs.html">
+<link rel="import" href="../paper-spinner/paper-spinner.html">
 <!--
 	`puredat-string-i18n` "STRING" type, "ONE" cardinality, and "I18N" widget.
 	
@@ -53,20 +54,20 @@
 					id="languageTabs" disabled 
 					selected="{{selected}}">
 
-				<template is="dom-repeat" items="{{supportedLanguages}}" rendered-item-count="count">
-					<paper-tab active$="[[isSelected(index)]]">[[item.literal]]</paper-tab>
+				<template is="dom-repeat" items="{{values}}">
+					<paper-tab active$="[[isSelected(index)]]">[[item.languageLiteral]]</paper-tab>
 				</template>
 			</paper-tabs>
 		</div>
 		
 		<iron-pages selected="{{selected}}">
-			<template is="dom-repeat" items="{{supportedLanguages}}">
+			<template is="dom-repeat" items="{{values}}">
 				<paper-input
 						no-label-float
 						type="text" 
 						maxlength="[[maxLength]]" 
 						allowed-pattern="[[pattern]]"
-						value="[[getValue(value, item.name)]]" 
+						value="{{item.value}}" 
 						error-message="[[errorMessage]]"
 						invalid="[[_isInvalid(errorMessage)]]"
 						readonly$="[[readOnly]]">
@@ -80,6 +81,7 @@
 				</paper-input>
 			</template>
 		</iron-pages>
+		<paper-spinner active$="[[isSpinnerActive(_pendingCount)]]" style="position: absolute; top: 50%; left: 50%"></paper-spinner>
 	</template>
 	
 	<script>
@@ -88,22 +90,28 @@
 			
 			properties: {
 				
+				_pendingCount: {
+					type: Number,
+					value: 0
+				},
+				
 				selected: {
 					type: Number,
 					value: 0
 				},
 				
-				supportedLanguages: {
+				/** Values. Sub-properties are languageName, languageLiteral, and value. */
+				values: {
 					type: Array,
 					value: function() {
 						return [
 							{
-								name: "es_ES",
-								literal: "Spanish"
+								languageName: "es_ES",
+								languageLiteral: "Spanish"
 							},
 							{
-								name: "en_US",
-								literal: "English (US)"
+								languageName: "en_US",
+								languageLiteral: "English"
 							}
 						];
 					}
@@ -130,15 +138,6 @@
 					type: String
 				},
 				
-				/** Value. */
-				value: {
-					type: Object,
-					notify: true,
-					value: function() {
-						return {};
-					}
-				},
-				
 				/** Error message. */
 				errorMessage: {
 					type: String
@@ -158,54 +157,56 @@
 				}
 			},
 			
+			isSpinnerActive: function(pendingCount) {
+				return (pendingCount > 0);
+			},
+			
 			translateHandler: function(event) {
 				var baseLanguage;
 				var baseValue;
-
-				if (this.supportedLanguages != null
-						&& this.supportedLanguages.length > 0) {
-					for (var i = 0; i < this.supportedLanguages.length; i++) {
-						var languageName = this.supportedLanguages[i].name;
+				
+				if (this.values != null
+						&& this.values.length > 0) {
+					for (var i = 0; i < this.values.length; i++) {
+						var languageName = this.values[i].languageName;
 						if (languageName != null && languageName != "") {
-							if (this.value[languageName] != null
-									&& this.value[languageName] != "") {
+							if (this.values[i].value != null
+									&& this.values[i].value != "") {
 								baseLanguage = languageName;
-								baseValue = this.value[languageName];
+								baseValue = this.values[i].value;
 								break;
 							}
 						}						
 					}
-
-					for (var i = 0; i < this.supportedLanguages.length; i++) {
-						var languageName = this.supportedLanguages[i].name;
+					
+					for (var i = 0; i < this.values.length; i++) {
+						var languageName = this.values[i].languageName;
 						if (languageName != baseLanguage) {
 							this.$.ajax.params["q"] = baseValue;
 							this.$.ajax.params["langpair"] = baseLanguage.split("_")[0] + "|" + languageName.replace("_", "-");
-console.log(this.$.ajax.params["q"]);
-console.log(this.$.ajax.params["langpair"]);
-							
 							this.$.ajax.generateRequest();
+							this._pendingCount++;
 						}
 					}
 				}
 			},
 			
 			responseHandler: function(event, request) {
+				this._pendingCount--;
 				if (event.detail.succeeded) {
 					if (event.detail.response != null
 							&& event.detail.response.matches != null
 							&& event.detail.response.matches.length > 0) {
-console.log(request.xhr);
-console.log(event.detail);
-console.log(event.target.params.langpair.split("|")[1]);
-console.log(event.detail.response.responseData.translatedText);
-						this.value[event.target.params.langpair.split("|")[1]] = event.detail.response.responseData.translatedText;
+						var values = JSON.parse(JSON.stringify(this.values));
+						var searchParams = new URLSearchParams(request.url);
+						for (var i = 0; i < values.length; i++) {
+							if (values[i].languageName == searchParams.get("langpair").split("|")[1].replace("-", "_")) {
+								values[i].value = event.detail.response.responseData.translatedText;
+							}
+						}
+						this.set("values", values);
 					}
 				}
-			},
-			
-			getValue: function(value, language) {
-				return value[language];
 			},
 			
 			isSelected: function(number) {
