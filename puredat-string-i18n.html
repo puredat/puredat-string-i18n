@@ -12,6 +12,12 @@
 <dom-module id="puredat-string-i18n">
 	<template>
 		<style>
+			paper-spinner {
+				position: absolute;
+				margin-top: -45px;
+				margin-left: 10px;
+			}
+			
 			paper-tabs {
 				--paper-tabs-selection-bar-color: var(--accent-color);
 				padding-right: 10px;
@@ -81,7 +87,7 @@
 				</paper-input>
 			</template>
 		</iron-pages>
-		<paper-spinner active$="[[isSpinnerActive(_pendingCount)]]" style="position: absolute; top: 50%; left: 50%"></paper-spinner>
+		<paper-spinner active$="[[isSpinnerActive(_pendingCount)]]"></paper-spinner>
 	</template>
 	
 	<script>
