@@ -61,23 +61,25 @@
 					noink 
 					selected="{{selected}}">
 
-				<template is="dom-repeat" items="{{values}}">
-					<paper-tab active$="[[isSelected(index)]]">[[item.languageLiteral]]</paper-tab>
+				<template is="dom-repeat" items="[[supportedLanguages]]">
+					<paper-tab active$="[[isSelected(index)]]">{{item}}</paper-tab>
 				</template>
 			</paper-tabs>
 		</div>
 		
 		<iron-pages selected="{{selected}}">
-			<template is="dom-repeat" items="{{values}}">
+			<template is="dom-repeat" items="[[supportedLanguages]]">
 				<paper-input
 						no-label-float
 						type="text" 
 						maxlength="[[maxLength]]" 
 						allowed-pattern="[[pattern]]"
-						value="{{item.value}}" 
+						value="{{_getLangValue(value,item)}}" 
 						error-message="[[errorMessage]]"
 						invalid="[[_isInvalid(errorMessage)]]"
-						readonly$="[[readOnly]]">
+						readonly$="[[readOnly]]"
+						on-value-changed="_newValue"
+						data-lng$="{{item}}" >
 					<paper-icon-button 
 							suffix 
 							title="Traducir" 
@@ -106,34 +108,13 @@
 					type: Number,
 					value: 0
 				},
+
+				supportedLanguages: {
+					type: Array
+				},
 				
-				/** Values. Sub-properties are languageName, languageLiteral, and value. */
-				values: {
-					type: Array,
-					value: function() {
-						return [
-							{
-								languageName: "es_ES",
-								languageLiteral: "Español"
-							},
-							{
-								languageName: "de",
-								languageLiteral: "Alemán"
-							},
-							{
-								languageName: "zh_HK",
-								languageLiteral: "Chino"
-							},
-							{
-								languageName: "en_US",
-								languageLiteral: "Inglés"
-							},
-							{
-								languageName: "fr_FR",
-								languageLiteral: "Francés"
-							}
-						];
-					}
+				value: {
+					type: Object
 				},
 				
 				/** Name */
@@ -175,6 +156,19 @@
 					value: false
 				}
 			},
+
+			_newValue: function(event){
+				if(event.srcElement || event.target){
+					var src = event.srcElement || event.target;
+					if(src.getAttribute("data-lng")){
+						this.value[src.getAttribute("data-lng")] = src.value ? src.value : null;
+					}
+				}
+			},
+
+			_getLangValue: function(value,code){
+				return this.value ? (this.value[code] ? this.value[code] : null) : null;
+			},
 			
 			isSpinnerActive: function(pendingCount) {
 				return (pendingCount > 0);
@@ -184,25 +178,25 @@
 				var baseLanguage;
 				var baseValue;
 				
-				if (this.values != null
-						&& this.values.length > 0) {
-					for (var i = 0; i < this.values.length; i++) {
-						var languageName = this.values[i].languageName;
-						if (languageName != null && languageName != "") {
-							if (this.values[i].value != null
-									&& this.values[i].value != "") {
-								baseLanguage = languageName;
-								baseValue = this.values[i].value;
+				if (this.supportedLanguages != null
+						&& this.supportedLanguages.length > 0) {
+					for (var i = 0; i < this.supportedLanguages.length; i++) {
+						var languageCode = this.supportedLanguages[i];
+						if (languageCode != null && languageCode != "") {
+							if (this.value[languageCode] != null
+									&& this.value[languageCode] != "") {
+								baseLanguage = languageCode;
+								baseValue = this.value[languageCode];
 								break;
 							}
 						}						
 					}
 					
-					for (var i = 0; i < this.values.length; i++) {
-						var languageName = this.values[i].languageName;
-						if (languageName != baseLanguage) {
+					for (var i = 0; i < this.supportedLanguages.length; i++) {
+						var languageCode = this.supportedLanguages[i];
+						if (languageCode != baseLanguage) {
 							this.$.ajax.params["q"] = baseValue;
-							this.$.ajax.params["langpair"] = baseLanguage.split("_")[0] + "|" + languageName.replace("_", "-");
+							this.$.ajax.params["langpair"] = baseLanguage.split("_")[0] + "|" + languageCode.replace("_", "-");
 							this.$.ajax.generateRequest();
 							this._pendingCount++;
 						}
@@ -216,14 +210,14 @@
 					if (event.detail.response != null
 							&& event.detail.response.matches != null
 							&& event.detail.response.matches.length > 0) {
-						var values = JSON.parse(JSON.stringify(this.values));
 						var searchParams = new URLSearchParams(request.url);
-						for (var i = 0; i < values.length; i++) {
-							if (values[i].languageName == searchParams.get("langpair").split("|")[1].replace("-", "_")) {
-								values[i].value = event.detail.response.responseData.translatedText;
+						var value = {};
+						for (var i = 0; i < this.supportedLanguages.length; i++) {
+							if (this.supportedLanguages[i] == searchParams.get("langpair").split("|")[1].replace("-", "_")) {
+								value[this.supportedLanguages[i]] = event.detail.response.responseData.translatedText;
 							}
 						}
-						this.set("values", values);
+						this.set("value", value);
 					}
 				}
 			},
