@@ -28,7 +28,7 @@
 								label="Just a string i18n test"
 								cols="6"
 								supported-languages="['es_ES','en_EN']"
-								value="{'es_ES':['test1','test2'],'en_EN':['test3','test4']}"
+								value="{'es_ES':'test1','en_EN':'test2'}"
 								pattern="[A-Za-z ]">
 						</puredat-string-many-i18n>
 						
@@ -36,7 +36,7 @@
 								name="field2" 
 								cols="4"
 								supported-languages="['es_ES','en_EN']"
-								value="{'es_ES':['test1','test2'],'en_EN':['test3','test4']}"
+								value="{'es_ES':'test1','en_EN':'test2'}"
 								read-only>
 						</puredat-string-many-i18n>
 					</div>
@@ -61,7 +61,7 @@
 						}
 						
 						function setValuesClickHandler(event) {
-							document.getElementById("field1").value = {'es_ES':['test1','test2'],'en_EN':['test3','test4']};
+							document.getElementById("field1").value = {'es_ES':'test1','en_EN':'test2'};
 							document.getElementById("field1").selected = 0;
 						}
 					</script>
