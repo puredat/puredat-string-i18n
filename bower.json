@@ -12,7 +12,12 @@
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
     "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
-    "web-component-tester": "^4.0.0",
+    "web-component-tester": "^6.5.0",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "resolutions": {
+    "web-component-tester": "^4.0.0",
+    "test-fixture": "^1.0.0",
+    "mocha": "^2.3.0"
   }
 }
